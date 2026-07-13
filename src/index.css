@@ -1,0 +1,127 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand */
+  --color-viber: #7360f2;
+  --color-viber-600: #6350e6;
+  --color-viber-700: #5541c9;
+  --color-viber-soft: #efecff;
+  --color-viber-softer: #f6f4ff;
+
+  /* Surfaces */
+  --color-canvas: #f7f5fb;
+  --color-surface: #ffffff;
+  --color-lav: #f0ecfa;
+
+  /* Text */
+  --color-ink: #171532;
+  --color-ink-2: #4b4869;
+  --color-ink-3: #8b88a6;
+
+  /* Semantic */
+  --color-risk: #e5484d;
+  --color-risk-soft: #fdecec;
+  --color-good: #1f9d6b;
+  --color-good-soft: #e6f6ef;
+  --color-gold: #e0a92e;
+
+  /* Radii */
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
+    Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, monospace;
+
+  /* Case-study shell theme (transferred from viber-pay-case-study-3d).
+     Scoped to the presentation frame only — the phone keeps the light tokens above. */
+  --color-cs-bg: #0b0918;
+  --color-cs-bg2: #0f0c20;
+  --color-cs-text: #edeafb;
+  --color-cs-muted: #8b85ad;
+  --color-cs-dim: #5a5478;
+  --color-cs-glow: #a78bff;
+  --color-cs-lav: #cfc5ff;
+  --color-cs-green: #4ade80;
+  --color-cs-red: #f87171;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: var(--font-sans);
+  background: #0b0918;
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ── Case-study shell (dark glowing stage + glass panels) ────────────────── */
+.cs-stage {
+  background:
+    radial-gradient(58% 46% at 14% 8%, rgba(115, 96, 242, 0.22), transparent 60%),
+    radial-gradient(52% 44% at 88% 92%, rgba(167, 139, 255, 0.16), transparent 60%),
+    radial-gradient(ellipse 90% 80% at 50% 45%, transparent 40%, rgba(5, 4, 14, 0.55) 100%),
+    #0b0918;
+}
+
+.cs-panel {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(167, 139, 255, 0.16);
+  backdrop-filter: blur(20px) saturate(1.3);
+  -webkit-backdrop-filter: blur(20px) saturate(1.3);
+  box-shadow: 0 0 60px rgba(115, 96, 242, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.cs-glow-text {
+  text-shadow: 0 0 18px rgba(167, 139, 255, 0.55);
+}
+
+.cs-active {
+  background: linear-gradient(135deg, rgba(115, 96, 242, 0.9), rgba(111, 53, 255, 0.75));
+  border: 1px solid rgba(167, 139, 255, 0.5);
+  box-shadow: 0 0 26px rgba(115, 96, 242, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* purple halo behind the device, as in the case study's product reveal */
+.device-glow {
+  position: absolute;
+  inset: -60px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(115, 96, 242, 0.32), rgba(111, 53, 255, 0.1) 45%, transparent 70%);
+  filter: blur(34px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+#root {
+  min-height: 100%;
+}
+
+/* thin, calm scrollbars inside the phone */
+.no-scrollbar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+/* number tabular alignment for money that animates */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
