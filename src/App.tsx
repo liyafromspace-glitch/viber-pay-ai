@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { Sparkles, ChevronRight, Target, Swords, Scale, Activity, ShieldAlert } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  Activity,
+  ChevronDown,
+  ChevronRight,
+  Scale,
+  ShieldAlert,
+  Sparkles,
+  Swords,
+  Target,
+} from "lucide-react";
 import { AIProvider, TransparencySheet } from "./ui/ai";
 import { PhoneFrame } from "./ui/Phone";
 import { SCENARIOS, PILLARS, KEY_INTERACTIONS, type Pillar } from "./data/walkthrough";
@@ -20,7 +29,6 @@ const initialId = () => {
 
 export default function App() {
   const [activeId, setActiveId] = useState(initialId);
-  const [showStrategy, setShowStrategy] = useState(true);
   const active = SCENARIOS.find((s) => s.id === activeId) ?? SCENARIOS[0];
   const Scene = active.component;
 
@@ -38,36 +46,29 @@ export default function App() {
   return (
     <AIProvider>
       <div className="cs-stage flex min-h-screen w-full flex-wrap items-start justify-center gap-8 px-4 py-8 lg:px-10">
-        {/* Persistent, always-clickable walkthrough panel */}
         <aside className="order-1 w-full max-w-[360px] shrink-0 sm:w-[340px] lg:sticky lg:top-8">
-          <Walkthrough
-            activeId={activeId}
-            onPick={pick}
-            showStrategy={showStrategy}
-            onToggleStrategy={() => setShowStrategy((v) => !v)}
-          />
+          <Walkthrough activeId={activeId} onPick={pick} />
         </aside>
 
-        {/* Phone */}
         <div className="order-2 relative flex flex-col items-center">
           <div className="device-glow" />
           <div className="relative z-10">
-          <PhoneFrame>
-            {/*
-              Keyed, direct render (no exit-wait AnimatePresence): switching scenarios
-              remounts instantly, so the phone is never left blank mid-transition.
-            */}
-            <motion.div
-              key={activeId}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={tween}
-              className="flex min-h-0 flex-1 flex-col"
-            >
-              <Scene />
-            </motion.div>
-            <TransparencySheet />
-          </PhoneFrame>
+            <PhoneFrame>
+              {/*
+                Keyed, direct render (no exit-wait AnimatePresence): switching scenarios
+                remounts instantly, so the phone is never left blank mid-transition.
+              */}
+              <motion.div
+                key={activeId}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={tween}
+                className="flex min-h-0 flex-1 flex-col"
+              >
+                <Scene />
+              </motion.div>
+              <TransparencySheet />
+            </PhoneFrame>
           </div>
 
           <p className="relative z-10 mt-5 max-w-[380px] text-center text-[12px] leading-relaxed text-cs-dim">
@@ -75,12 +76,12 @@ export default function App() {
           </p>
         </div>
 
-        {/* Strategy layer — its own column on the right */}
-        {showStrategy && (
-          <aside className="order-3 w-full max-w-[360px] shrink-0 sm:w-[320px] lg:sticky lg:top-8">
+        <aside className="order-3 w-full max-w-[360px] shrink-0 sm:w-[320px] lg:sticky lg:top-8">
+          <div className="space-y-4">
             <StrategyCard scenario={active} />
-          </aside>
-        )}
+            <AnalyticsCard scenario={active} />
+          </div>
+        </aside>
       </div>
     </AIProvider>
   );
@@ -89,14 +90,11 @@ export default function App() {
 function Walkthrough({
   activeId,
   onPick,
-  showStrategy,
-  onToggleStrategy,
 }: {
   activeId: string;
   onPick: (id: string) => void;
-  showStrategy: boolean;
-  onToggleStrategy: () => void;
 }) {
+  const [showInteractions, setShowInteractions] = useState(true);
 
   return (
     <div className="cs-panel rounded-[20px] p-5">
@@ -113,18 +111,6 @@ function Walkthrough({
               Payments that understand life
             </p>
           </div>
-          <button
-            onClick={onToggleStrategy}
-            className={cx(
-              "rounded-full px-2.5 py-1 font-mono text-[9.5px] uppercase tracking-[0.12em] transition-colors",
-              showStrategy
-                ? "bg-viber text-white shadow-[0_0_18px_rgba(115,96,242,0.5)]"
-                : "border border-[rgba(167,139,255,0.25)] text-cs-dim hover:text-cs-glow"
-            )}
-            title="Toggle the research / strategy layer (shown on the right)"
-          >
-            Strategy
-          </button>
         </div>
         <p className="mt-3 text-[12px] leading-relaxed text-cs-muted">
           A walkthrough of the ten AI-native interactions, grouped by the three bets that win the
@@ -179,10 +165,7 @@ function Walkthrough({
                           KPI · {s.kpi}
                         </span>
                       </span>
-                      <ChevronRight
-                        size={16}
-                        className={cx("shrink-0", on ? "text-white/80" : "text-cs-dim")}
-                      />
+                      <ChevronRight size={16} className={cx("shrink-0", on ? "text-white/80" : "text-cs-dim")} />
                     </button>
                   );
                 })}
@@ -193,19 +176,41 @@ function Walkthrough({
       </div>
 
       <div className="mt-5 border-t border-[rgba(167,139,255,0.12)] pt-4">
-        <h3 className="mb-2 font-mono text-[9.5px] font-bold uppercase tracking-[0.14em] text-cs-dim">
-          10 key interactions
-        </h3>
-        <div className="flex flex-wrap gap-1.5">
-          {KEY_INTERACTIONS.map((k, i) => (
-            <span
-              key={k}
-              className="rounded-full border border-[rgba(167,139,255,0.16)] bg-[rgba(115,96,242,0.05)] px-2.5 py-1 font-mono text-[9.5px] tracking-[0.03em] text-cs-muted"
+        <button
+          type="button"
+          onClick={() => setShowInteractions((v) => !v)}
+          className="flex w-full items-center gap-2 text-left"
+        >
+          <h3 className="font-mono text-[9.5px] font-bold uppercase tracking-[0.14em] text-cs-dim">
+            10 key interactions
+          </h3>
+          <ChevronDown
+            size={14}
+            className={cx("ml-auto shrink-0 text-cs-dim transition-transform", showInteractions && "rotate-180")}
+          />
+        </button>
+        <AnimatePresence initial={false}>
+          {showInteractions && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={tween}
+              className="overflow-hidden"
             >
-              {i + 1}. {k}
-            </span>
-          ))}
-        </div>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {KEY_INTERACTIONS.map((k, i) => (
+                  <span
+                    key={k}
+                    className="rounded-full border border-[rgba(167,139,255,0.16)] bg-[rgba(115,96,242,0.05)] px-2.5 py-1 font-mono text-[9.5px] tracking-[0.03em] text-cs-muted"
+                  >
+                    {i + 1}. {k}
+                  </span>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
@@ -213,21 +218,27 @@ function Walkthrough({
 
 /** The research-backed strategy layer for the active scenario: KPI · vs competitors · Legal. */
 function StrategyCard({ scenario }: { scenario: (typeof SCENARIOS)[number] }) {
+  const [open, setOpen] = useState(true);
   const color = PILLAR_COLOR[scenario.pillar];
   const rows = [
     { icon: Target, label: "KPI", text: scenario.kpiFull, tint: "#4ade80" },
     { icon: Swords, label: "vs competitors", text: scenario.versus, tint: "#a78bff" },
     { icon: Scale, label: "Legal / constraint", text: scenario.legal, tint: "#e0a92e" },
   ];
+
   return (
     <motion.div
       key={scenario.id}
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={tween}
-      className="cs-panel mb-4 overflow-hidden rounded-[20px]"
+      className="cs-panel overflow-hidden rounded-[20px]"
     >
-      <div className="flex items-center gap-2 px-3.5 pt-3">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center gap-2 px-3.5 pt-3 text-left"
+      >
         <span className="h-2 w-2 rounded-full" style={{ background: color, boxShadow: `0 0 8px ${color}` }} />
         <span className="font-mono text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color }}>
           {scenario.pillar} · Strategy
@@ -235,52 +246,163 @@ function StrategyCard({ scenario }: { scenario: (typeof SCENARIOS)[number] }) {
         <span className="ml-auto font-mono text-[9.5px] uppercase tracking-[0.06em] text-cs-dim">
           {scenario.title}
         </span>
-      </div>
-      <div className="space-y-2.5 p-3.5">
-        {rows.map(({ icon: Icon, label, text, tint }) => (
-          <div key={label} className="flex gap-2.5">
-            <span
-              className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg"
-              style={{ background: `${tint}22`, color: tint }}
-            >
-              <Icon size={13} strokeWidth={2.4} />
-            </span>
-            <div className="min-w-0">
-              <div className="font-mono text-[9.5px] font-bold uppercase tracking-[0.1em] text-cs-dim">{label}</div>
-              <div className="text-[12px] leading-[1.45] text-cs-muted">{text}</div>
-            </div>
-          </div>
-        ))}
+        <ChevronDown size={14} className={cx("ml-2 shrink-0 text-cs-dim transition-transform", open && "rotate-180")} />
+      </button>
 
-        {/* Usability metrics to track (HEART lens @ 190M scale) */}
-        <div className="mt-1 border-t border-[rgba(167,139,255,0.12)] pt-3">
-          <div className="mb-1.5 flex items-center gap-1.5">
-            <Activity size={13} strokeWidth={2.6} className="text-cs-glow" />
-            <span className="font-mono text-[9.5px] font-bold uppercase tracking-[0.1em] text-cs-dim">
-              Metrics to track
-            </span>
-          </div>
-          <ul className="space-y-1">
-            {scenario.metrics.map((m) => (
-              <li key={m} className="flex gap-2 text-[12px] leading-[1.4] text-cs-muted">
-                <span className="mt-[6px] h-1 w-1 shrink-0 rounded-full bg-cs-glow/70" />
-                {m}
-              </li>
-            ))}
-          </ul>
-        </div>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={tween}
+            className="overflow-hidden"
+          >
+            <div className="space-y-2.5 p-3.5">
+              {rows.map(({ icon: Icon, label, text, tint }) => (
+                <div key={label} className="flex gap-2.5">
+                  <span
+                    className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg"
+                    style={{ background: `${tint}22`, color: tint }}
+                  >
+                    <Icon size={13} strokeWidth={2.4} />
+                  </span>
+                  <div className="min-w-0">
+                    <div className="font-mono text-[9.5px] font-bold uppercase tracking-[0.1em] text-cs-dim">
+                      {label}
+                    </div>
+                    <div className="text-[12px] leading-[1.45] text-cs-muted">{text}</div>
+                  </div>
+                </div>
+              ))}
 
-        {/* Paired guardrail */}
-        <div className="flex items-start gap-2 rounded-xl border border-[rgba(248,113,113,0.22)] bg-[rgba(248,113,113,0.09)] px-2.5 py-2">
-          <ShieldAlert size={13} strokeWidth={2.4} className="mt-[2px] shrink-0 text-cs-red" />
-          <div className="min-w-0">
-            <div className="font-mono text-[9.5px] font-bold uppercase tracking-[0.1em] text-cs-red">
-              Guardrail
+              <div className="mt-1 border-t border-[rgba(167,139,255,0.12)] pt-3">
+                <div className="mb-1.5 flex items-center gap-1.5">
+                  <Activity size={13} strokeWidth={2.6} className="text-cs-glow" />
+                  <span className="font-mono text-[9.5px] font-bold uppercase tracking-[0.1em] text-cs-dim">
+                    Metrics to track
+                  </span>
+                </div>
+                <ul className="space-y-1">
+                  {scenario.metrics.map((m) => (
+                    <li key={m} className="flex gap-2 text-[12px] leading-[1.4] text-cs-muted">
+                      <span className="mt-[6px] h-1 w-1 shrink-0 rounded-full bg-cs-glow/70" />
+                      {m}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="flex items-start gap-2 rounded-xl border border-[rgba(248,113,113,0.22)] bg-[rgba(248,113,113,0.09)] px-2.5 py-2">
+                <ShieldAlert size={13} strokeWidth={2.4} className="mt-[2px] shrink-0 text-cs-red" />
+                <div className="min-w-0">
+                  <div className="font-mono text-[9.5px] font-bold uppercase tracking-[0.1em] text-cs-red">
+                    Guardrail
+                  </div>
+                  <div className="text-[12px] leading-[1.4] text-cs-muted">{scenario.guardrail}</div>
+                </div>
+              </div>
             </div>
-            <div className="text-[12px] leading-[1.4] text-cs-muted">{scenario.guardrail}</div>
-          </div>
-        </div>
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+function AnalyticsCard({ scenario }: { scenario: (typeof SCENARIOS)[number] }) {
+  const [open, setOpen] = useState(true);
+  const color = PILLAR_COLOR[scenario.pillar];
+  const trackedEvents =
+    scenario.id === "gift"
+      ? [
+          "gift_suggested",
+          "gift_opened",
+          "gift_amount_changed",
+          "gift_sent",
+          "gift_cancelled",
+          "gift_received",
+        ]
+      : [
+          `${scenario.id}_suggested`,
+          `${scenario.id}_opened`,
+          `${scenario.id}_edited`,
+          `${scenario.id}_sent`,
+          `${scenario.id}_cancelled`,
+          `${scenario.id}_received`,
+        ];
+  const successMetrics = ["Activation", "Time to send", "Retention", "Network effect"];
+
+  return (
+    <motion.div
+      key={`${scenario.id}-analytics`}
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={tween}
+      className="cs-panel overflow-hidden rounded-[20px]"
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center gap-2 px-3.5 pt-3 text-left"
+      >
+        <span className="h-2 w-2 rounded-full" style={{ background: color, boxShadow: `0 0 8px ${color}` }} />
+        <span className="font-mono text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color }}>
+          Analytics
+        </span>
+        <span className="ml-auto font-mono text-[9.5px] uppercase tracking-[0.06em] text-cs-dim">
+          {scenario.title}
+        </span>
+        <ChevronDown size={14} className={cx("ml-2 shrink-0 text-cs-dim transition-transform", open && "rotate-180")} />
+      </button>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={tween}
+            className="overflow-hidden"
+          >
+            <div className="space-y-3 p-3.5">
+              <p className="text-[12px] leading-[1.45] text-cs-muted">Every interaction needs</p>
+
+              <div>
+                <div className="mb-2 font-mono text-[9.5px] font-bold uppercase tracking-[0.1em] text-cs-dim">
+                  Tracked events
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {trackedEvents.map((event) => (
+                    <span
+                      key={event}
+                      className="rounded-full border border-[rgba(167,139,255,0.16)] bg-[rgba(115,96,242,0.05)] px-2.5 py-1 font-mono text-[9.5px] tracking-[0.03em] text-cs-muted"
+                    >
+                      {event}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div className="mb-2 font-mono text-[9.5px] font-bold uppercase tracking-[0.1em] text-cs-dim">
+                  Success
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {successMetrics.map((metric) => (
+                    <div
+                      key={metric}
+                      className="rounded-2xl border border-[rgba(167,139,255,0.12)] bg-white/[0.03] px-3 py-2 text-[12px] leading-[1.35] text-cs-muted"
+                    >
+                      {metric}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
